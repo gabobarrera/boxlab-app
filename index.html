@@ -3,176 +3,194 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BOXLAB DESIGNER</title>
+    <title>BOXLAB PRO ULTIMATE</title>
 </head>
-<body class="antialiased font-sans bg-blue text-white overflow-hidden">
+<body class="antialiased font-sans bg-black text-white overflow-hidden">
+    
     <div id="canvas-container" class="fixed inset-0 z-0"></div>
 
-    <div class="fixed top-4 right-4 z-20 flex gap-2">
-        <button id="btn-explode" class="bg-black/80 backdrop-blur border border-white/20 p-3 rounded hover:border-[#C5A96E] transition-colors text-white" title="Vista Explosiva">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"></path></svg>
-        </button>
-        <button id="btn-xray" class="bg-black/80 backdrop-blur border border-white/20 p-3 rounded hover:border-[#C5A96E] transition-colors text-white" title="Rayos X">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
-        </button>
-    </div>
+    <section id="hero-section" class="relative z-30 h-screen flex flex-col justify-center items-center text-center bg-black/40 backdrop-blur-[2px] transition-all duration-1000">
+        <div class="space-y-6 max-w-4xl px-4">
+            <h1 class="text-7xl md:text-9xl font-bold tracking-tighter text-white mb-2">
+                BOXLAB
+            </h1>
+            <p class="text-[#C5A96E] tracking-[0.4em] text-sm md:text-base uppercase font-mono border-t border-b border-[#C5A96E]/30 py-4 inline-block">
+                Precision Acoustic Engineering
+            </p>
+            <div class="pt-12">
+                <button id="btn-start-app" class="group relative px-12 py-4 bg-transparent overflow-hidden border border-[#C5A96E] transition-all duration-300 hover:shadow-[0_0_30px_rgba(197,169,110,0.3)]">
+                    <div class="absolute inset-0 w-0 bg-[#C5A96E] transition-all duration-[250ms] ease-out group-hover:w-full opacity-100"></div>
+                    <span class="relative text-[#C5A96E] group-hover:text-black font-bold tracking-widest text-xs uppercase flex items-center justify-center gap-3 transition-colors">
+                        Iniciar Proyecto
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+                    </span>
+                </button>
+            </div>
+            <p class="text-gray-500 text-xs mt-8 font-mono">v2.1.0 | Simulation Engine Active</p>
+        </div>
+    </section>
 
-    <aside class="fixed left-0 top-0 h-full w-96 bg-black/90 backdrop-blur-xl border-r border-white/10 z-10 flex flex-col">
-        <div class="p-6 border-b border-[#C5A96E]">
-            <h1 class="text-2xl font-bold tracking-widest text-white">BOXLAB <span class="text-[#C5A96E] text-xs align-top">PRO</span></h1>
+    <div id="app-interface" class="opacity-0 pointer-events-none transition-opacity duration-1000 z-20 relative h-full">
+        
+        <div class="fixed top-4 right-4 z-20 flex gap-2">
+            <button id="btn-home" class="bg-black/80 backdrop-blur border border-white/20 p-3 rounded hover:border-[#C5A96E] transition-colors text-white" title="Salir al Inicio">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+            </button>
+            <div class="w-px h-10 bg-white/20 mx-2"></div>
+            <button id="btn-explode" class="bg-black/80 backdrop-blur border border-white/20 p-3 rounded hover:border-[#C5A96E] transition-colors text-white" title="Vista Explosiva">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"></path></svg>
+            </button>
+            <button id="btn-xray" class="bg-black/80 backdrop-blur border border-white/20 p-3 rounded hover:border-[#C5A96E] transition-colors text-white" title="Rayos X">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+            </button>
         </div>
 
-        <div class="flex border-b border-white/10 text-xs font-bold uppercase tracking-wider text-gray-500">
-            <button id="tab-design" class="flex-1 py-3 hover:text-white transition-colors text-[#C5A96E] border-b-2 border-[#C5A96E]">Diseño</button>
-            <button id="tab-analysis" class="flex-1 py-3 hover:text-white transition-colors">Análisis</button>
-            <button id="tab-build" class="flex-1 py-3 hover:text-white transition-colors">Cortes</button>
-        </div>
+        <aside class="fixed left-0 top-0 h-full w-96 bg-black/90 backdrop-blur-xl border-r border-white/10 z-10 flex flex-col">
+            <div class="p-6 border-b border-[#C5A96E]">
+                <h1 class="text-2xl font-bold tracking-widest text-white">BOXLAB <span class="text-[#C5A96E] text-xs align-top">PRO</span></h1>
+            </div>
 
-        <div class="flex-1 overflow-y-auto p-6 custom-scroll">
-            
-            <div id="panel-design" class="space-y-6">
+            <div class="flex border-b border-white/10 text-xs font-bold uppercase tracking-wider text-gray-500">
+                <button id="tab-design" class="flex-1 py-3 hover:text-white transition-colors text-[#C5A96E] border-b-2 border-[#C5A96E]">Diseño</button>
+                <button id="tab-analysis" class="flex-1 py-3 hover:text-white transition-colors">Análisis</button>
+                <button id="tab-build" class="flex-1 py-3 hover:text-white transition-colors">Cortes</button>
+            </div>
+
+            <div class="flex-1 overflow-y-auto p-6 custom-scroll">
                 
-                <div>
-                    <label class="text-[10px] text-gray-500 block mb-1">SELECCIONAR DRIVER</label>
-                    <select id="sel-driver" class="bo-input w-full py-2 px-2 bg-[#0a0a0a] border border-white/20 text-xs text-[#C5A96E]"></select>
-                </div>
-
-                <div class="border-t border-white/10 pt-4 space-y-4">
-                    <h3 class="text-[#C5A96E] text-xs font-mono uppercase mb-2">Dimensiones (cm)</h3>
-                    
+                <div id="panel-design" class="space-y-6">
                     <div>
-                        <div class="flex justify-between items-center mb-1">
-                            <label class="text-[10px] text-gray-400">ANCHO (W)</label>
-                            <input type="number" id="num-width" class="bg-transparent border-b border-gray-700 text-right w-12 text-xs focus:border-[#C5A96E] outline-none text-white">
-                        </div>
-                        <input type="range" id="slider-width" min="20" max="100" class="w-full">
-                    </div>
-                    
-                    <div>
-                        <div class="flex justify-between items-center mb-1">
-                            <label class="text-[10px] text-gray-400">ALTO (H)</label>
-                            <input type="number" id="num-height" class="bg-transparent border-b border-gray-700 text-right w-12 text-xs focus:border-[#C5A96E] outline-none text-white">
-                        </div>
-                        <input type="range" id="slider-height" min="20" max="120" class="w-full">
+                        <label class="text-[10px] text-gray-500 block mb-1">SELECCIONAR DRIVER</label>
+                        <select id="sel-driver" class="bo-input w-full py-2 px-2 bg-[#0a0a0a] border border-white/20 text-xs text-[#C5A96E]"></select>
                     </div>
 
-                    <div>
-                        <div class="flex justify-between items-center mb-1">
-                            <label class="text-[10px] text-gray-400">PROFUNDIDAD (D)</label>
-                            <input type="number" id="num-depth" class="bg-transparent border-b border-gray-700 text-right w-12 text-xs focus:border-[#C5A96E] outline-none text-white">
-                        </div>
-                        <input type="range" id="slider-depth" min="20" max="100" class="w-full">
-                    </div>
-                </div>
-
-                <div class="border-t border-white/10 pt-4">
-                    <label class="text-[10px] text-gray-500 block mb-1">TOPOLOGÍA</label>
-                    <select id="sel-box-type" class="bo-input w-full py-2 px-2 bg-[#0a0a0a] border border-white/20 mb-2 text-xs">
-                        <option value="ported" selected>Bass Reflex (Ported)</option>
-                        <option value="sealed">Sellada (Sealed)</option>
-                        <option value="bandpass4">Bandpass 4th</option>
-                    </select>
-
-                    <label class="text-[10px] text-gray-500 block mb-1">REFUERZOS (BRACING)</label>
-                    <select id="sel-bracing" class="bo-input w-full py-2 px-2 bg-[#0a0a0a] border border-white/20 mb-4 text-xs">
-                        <option value="none">Ninguno</option>
-                        <option value="window" selected>Tipo Ventana</option>
-                        <option value="cross">Cruz Matriz</option>
-                    </select>
-                </div>
-
-                <div id="sec-bandpass" class="hidden border-l-2 border-[#C5A96E] pl-2">
-                    <label class="text-[10px] text-gray-500 block mb-1">DIVISIÓN CÁMARA</label>
-                    <input type="range" id="input-ratio" min="0.2" max="0.8" step="0.05" value="0.5" class="w-full mb-2">
-                    <div class="grid grid-cols-2 gap-2 text-[10px]">
-                        <div class="bg-white/5 p-1 rounded">Rear: <span id="disp-vol-c1" class="font-bold">--</span></div>
-                        <div class="bg-white/5 p-1 rounded">Front: <span id="disp-vol-c2" class="font-bold">--</span></div>
-                    </div>
-                </div>
-
-                <div id="sec-port">
-                    <h3 class="text-[#C5A96E] text-xs font-mono uppercase mb-2 border-t border-white/10 pt-4">Puerto</h3>
-                    
-                    <select id="sel-port-type" class="bo-input w-full py-1 px-2 bg-[#0a0a0a] border border-white/20 mb-3 text-xs">
-                        <option value="circular">Circular Tubo</option>
-                        <option value="slot">Slot Rectangular</option>
-                        <option value="aero" selected>Aeroport (Bose)</option>
-                    </select>
-
-                    <div class="flex items-center justify-between mb-3">
-                        <label class="text-[10px] text-gray-400">SINTONÍA (Hz)</label>
-                        <input id="in-freq" type="number" value="36" class="bg-transparent border-b border-[#C5A96E] text-center w-12 text-sm text-white focus:outline-none">
-                    </div>
-
-                    <div id="div-circ">
-                        <div class="flex justify-between items-center mb-1">
-                            <label class="text-[10px] text-gray-500">DIÁMETRO (cm)</label>
-                            <input type="number" id="num-diam" class="bg-transparent border-b border-gray-700 text-right w-12 text-xs text-white">
-                        </div>
-                        <input type="range" id="slider-diam" min="5" max="25" step="0.5" class="w-full">
-                    </div>
-                    
-                    <div id="div-slot" class="hidden space-y-2">
+                    <div class="border-t border-white/10 pt-4 space-y-4">
+                        <h3 class="text-[#C5A96E] text-xs font-mono uppercase mb-2">Dimensiones (cm)</h3>
+                        
                         <div>
                             <div class="flex justify-between items-center mb-1">
-                                <label class="text-[10px] text-gray-500">ANCHO (cm)</label>
-                                <input type="number" id="num-p-width" class="bg-transparent border-b border-gray-700 text-right w-12 text-xs text-white">
+                                <label class="text-[10px] text-gray-400">ANCHO (W)</label>
+                                <input type="number" id="num-width" class="bg-transparent border-b border-gray-700 text-right w-12 text-xs focus:border-[#C5A96E] outline-none text-white">
                             </div>
-                            <input type="range" id="slider-p-width" min="5" max="40" step="0.5" class="w-full">
+                            <input type="range" id="slider-width" min="20" max="100" class="w-full">
                         </div>
+                        
                         <div>
                             <div class="flex justify-between items-center mb-1">
-                                <label class="text-[10px] text-gray-500">ALTO (cm)</label>
-                                <input type="number" id="num-p-height" class="bg-transparent border-b border-gray-700 text-right w-12 text-xs text-white">
+                                <label class="text-[10px] text-gray-400">ALTO (H)</label>
+                                <input type="number" id="num-height" class="bg-transparent border-b border-gray-700 text-right w-12 text-xs focus:border-[#C5A96E] outline-none text-white">
                             </div>
-                            <input type="range" id="slider-p-height" min="2" max="20" step="0.5" class="w-full">
+                            <input type="range" id="slider-height" min="20" max="120" class="w-full">
+                        </div>
+
+                        <div>
+                            <div class="flex justify-between items-center mb-1">
+                                <label class="text-[10px] text-gray-400">PROFUNDIDAD (D)</label>
+                                <input type="number" id="num-depth" class="bg-transparent border-b border-gray-700 text-right w-12 text-xs focus:border-[#C5A96E] outline-none text-white">
+                            </div>
+                            <input type="range" id="slider-depth" min="20" max="100" class="w-full">
                         </div>
                     </div>
 
-                    <div class="mt-4 bg-[#C5A96E]/10 p-2 rounded border border-[#C5A96E]/30">
-                        <p class="text-[9px] text-[#C5A96E] uppercase">Largo Requerido</p>
-                        <p id="disp-port-len" class="text-xl font-mono text-white">-- cm</p>
+                    <div class="border-t border-white/10 pt-4">
+                        <label class="text-[10px] text-gray-500 block mb-1">TOPOLOGÍA</label>
+                        <select id="sel-box-type" class="bo-input w-full py-2 px-2 bg-[#0a0a0a] border border-white/20 mb-2 text-xs">
+                            <option value="ported" selected>Bass Reflex (Ported)</option>
+                            <option value="sealed">Sellada (Sealed)</option>
+                            <option value="bandpass4">Bandpass 4th</option>
+                        </select>
+                        <label class="text-[10px] text-gray-500 block mb-1">REFUERZOS</label>
+                        <select id="sel-bracing" class="bo-input w-full py-2 px-2 bg-[#0a0a0a] border border-white/20 mb-4 text-xs">
+                            <option value="none">Ninguno</option>
+                            <option value="window" selected>Tipo Ventana</option>
+                            <option value="cross">Cruz Matriz</option>
+                        </select>
                     </div>
-                    
-                    <div id="ui-warnings" class="mt-2"></div>
-                </div>
-            </div>
 
-            <div id="panel-analysis" class="hidden space-y-4">
-                <div class="bg-white/5 p-3 rounded">
-                    <canvas id="freq-chart" width="400" height="300"></canvas>
-                </div>
-                <div class="text-xs text-gray-400 p-2">
-                    <p>• Curva teórica anecoica (1W/1m).</p>
-                    <p>• Ganancia de cabina: 0dB (Campo libre).</p>
-                </div>
-                <div class="flex justify-between border-t border-white/10 pt-2">
-                    <span class="text-gray-500 text-xs">VOLUMEN NETO</span>
-                    <span id="disp-net" class="text-white font-mono">-- L</span>
-                </div>
-            </div>
+                    <div id="sec-bandpass" class="hidden border-l-2 border-[#C5A96E] pl-2">
+                        <label class="text-[10px] text-gray-500 block mb-1">DIVISIÓN CÁMARA</label>
+                        <input type="range" id="input-ratio" min="0.2" max="0.8" step="0.05" value="0.5" class="w-full mb-2">
+                        <div class="grid grid-cols-2 gap-2 text-[10px]">
+                            <div class="bg-white/5 p-1 rounded">Rear: <span id="disp-vol-c1" class="font-bold">--</span></div>
+                            <div class="bg-white/5 p-1 rounded">Front: <span id="disp-vol-c2" class="font-bold">--</span></div>
+                        </div>
+                    </div>
 
-            <div id="panel-build" class="hidden">
-                <h3 class="text-[#C5A96E] text-xs font-mono uppercase mb-4">Lista de Cortes (18mm)</h3>
-                <table class="w-full text-left border-collapse">
-                    <thead>
-                        <tr class="text-[10px] text-gray-500 uppercase border-b border-white/10">
-                            <th class="pb-2">Panel</th>
-                            <th class="pb-2">Dims (cm)</th>
-                            <th class="pb-2 text-center">Cant.</th>
-                        </tr>
-                    </thead>
-                    <tbody id="cut-table-body" class="text-gray-300">
-                        </tbody>
-                </table>
-                <div class="mt-4 p-3 bg-white/5 text-[10px] text-gray-400">
-                    <p>* Medidas asumiendo uniones a tope (Butt joints).</p>
-                    <p>* Paneles superior/inferior cubren los laterales.</p>
-                </div>
-            </div>
+                    <div id="sec-port">
+                        <h3 class="text-[#C5A96E] text-xs font-mono uppercase mb-2 border-t border-white/10 pt-4">Puerto</h3>
+                        <select id="sel-port-type" class="bo-input w-full py-1 px-2 bg-[#0a0a0a] border border-white/20 mb-3 text-xs">
+                            <option value="circular">Circular Tubo</option>
+                            <option value="slot">Slot Rectangular</option>
+                            <option value="aero" selected>Aeroport (Bose)</option>
+                        </select>
 
-        </div>
-    </aside>
+                        <div class="flex items-center justify-between mb-3">
+                            <label class="text-[10px] text-gray-400">SINTONÍA (Hz)</label>
+                            <input id="in-freq" type="number" value="36" class="bg-transparent border-b border-[#C5A96E] text-center w-12 text-sm text-white focus:outline-none">
+                        </div>
+
+                        <div id="div-circ">
+                            <div class="flex justify-between items-center mb-1">
+                                <label class="text-[10px] text-gray-500">DIÁMETRO (cm)</label>
+                                <input type="number" id="num-diam" class="bg-transparent border-b border-gray-700 text-right w-12 text-xs text-white">
+                            </div>
+                            <input type="range" id="slider-diam" min="5" max="25" step="0.5" class="w-full">
+                        </div>
+                        
+                        <div id="div-slot" class="hidden space-y-2">
+                            <div>
+                                <div class="flex justify-between items-center mb-1">
+                                    <label class="text-[10px] text-gray-500">ANCHO (cm)</label>
+                                    <input type="number" id="num-p-width" class="bg-transparent border-b border-gray-700 text-right w-12 text-xs text-white">
+                                </div>
+                                <input type="range" id="slider-p-width" min="5" max="40" step="0.5" class="w-full">
+                            </div>
+                            <div>
+                                <div class="flex justify-between items-center mb-1">
+                                    <label class="text-[10px] text-gray-500">ALTO (cm)</label>
+                                    <input type="number" id="num-p-height" class="bg-transparent border-b border-gray-700 text-right w-12 text-xs text-white">
+                                </div>
+                                <input type="range" id="slider-p-height" min="2" max="20" step="0.5" class="w-full">
+                            </div>
+                        </div>
+
+                        <div class="mt-4 bg-[#C5A96E]/10 p-2 rounded border border-[#C5A96E]/30">
+                            <p class="text-[9px] text-[#C5A96E] uppercase">Largo Requerido</p>
+                            <p id="disp-port-len" class="text-xl font-mono text-white">-- cm</p>
+                        </div>
+                        
+                        <div id="ui-warnings" class="mt-2"></div>
+                    </div>
+                </div>
+
+                <div id="panel-analysis" class="hidden space-y-4">
+                    <div class="bg-white/5 p-3 rounded">
+                        <canvas id="freq-chart" width="400" height="300"></canvas>
+                    </div>
+                    <div class="text-xs text-gray-400 p-2"><p>• Curva teórica anecoica.</p></div>
+                    <div class="flex justify-between border-t border-white/10 pt-2">
+                        <span class="text-gray-500 text-xs">VOLUMEN NETO</span>
+                        <span id="disp-net" class="text-white font-mono">-- L</span>
+                    </div>
+                </div>
+
+                <div id="panel-build" class="hidden">
+                    <h3 class="text-[#C5A96E] text-xs font-mono uppercase mb-4">Lista de Cortes</h3>
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="text-[10px] text-gray-500 uppercase border-b border-white/10">
+                                <th class="pb-2">Panel</th>
+                                <th class="pb-2">Dims (cm)</th>
+                                <th class="pb-2 text-center">Cant.</th>
+                            </tr>
+                        </thead>
+                        <tbody id="cut-table-body" class="text-gray-300"></tbody>
+                    </table>
+                </div>
+
+            </div>
+        </aside>
+    </div>
 
     <script type="module" src="/src/main.ts"></script>
 </body>

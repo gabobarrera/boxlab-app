@@ -1,6 +1,6 @@
-import './style.css';
+import '/src/styles/style.css';
 import 'flowbite';
-import Chart from 'chart.js/auto'; 
+import Chart from 'charts.js/auto'; 
 import { AcousticView } from './core/AcousticView';
 import { appState } from './core/State';
 import { DRIVER_DATABASE } from './data/drivers';
