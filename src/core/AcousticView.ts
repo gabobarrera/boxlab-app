@@ -1,200 +1,433 @@
-import * as THREE from 'three';
-import { DesignParams, BoxType, PortType, SimulationResult } from '../types';
+import * as THREE from "three";
+// Asegúrate de tener 'three' instalado. Vite resuelve esto automáticamente.
+import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
+import { DesignParams, BoxType, PortType, SimulationResult } from "../types";
 
 export class AcousticView {
-    // ... (Propiedades estándar de Three.js igual)
     private scene: THREE.Scene;
     private camera: THREE.PerspectiveCamera;
     private renderer: THREE.WebGLRenderer;
-    private particleSystem: THREE.Points;
-    
-    private maxParticles = 30000;
-    private targetPositions: Float32Array;
-    private types: Uint8Array;
-    private baseColors: Float32Array;
-    private explodedPositions: Float32Array; // NUEVO: Para guardar posición expandida
+    private controls: OrbitControls;
 
-    private goldColor = new THREE.Color(0xC5A96E);
-    private redColor = new THREE.Color(0xFF0000);
+    // --- SISTEMAS ---
+    private particleSystem: THREE.Points;
+    private solidGroup: THREE.Group;
+
+    // --- DATOS DE PARTÍCULAS ---
+    private maxParticles = 60000; // Alta densidad
+    private particleGeo: THREE.BufferGeometry;
+    private particleMat: THREE.PointsMaterial;
+
+    private speakerTargets: number[] = [];
+    private explodedTargets: number[] = [];
+    private types: number[] = [];
+    private baseColors: number[] = [];
+
+    private colorHelper = new THREE.Color();
+    private GOLD = new THREE.Color(0xc5a96e);
+
+    // --- MATERIALES SÓLIDOS (CAD) ---
+    private matBody: THREE.MeshStandardMaterial;
+    private matDriver: THREE.MeshStandardMaterial;
+    private matPort: THREE.MeshStandardMaterial;
+
+    // --- ANIMACIÓN ---
+    private clock = new THREE.Clock();
+
+    // Variables de Centrado Inteligente
+    private currentTargetX = 0;
+    private targetTargetX = 0;
 
     constructor(container: HTMLElement) {
-        // ... (Scene setup igual)
+        // 1. Escena
         this.scene = new THREE.Scene();
         this.scene.fog = new THREE.FogExp2(0x050505, 0.002);
         this.scene.background = new THREE.Color(0x050505);
-        this.camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 3000);
-        this.camera.position.set(140, 70, 200);
-        this.renderer = new THREE.WebGLRenderer({ antialias: true });
+
+        // 2. Cámara
+        this.camera = new THREE.PerspectiveCamera(
+            50,
+            window.innerWidth / window.innerHeight,
+            0.1,
+            3000
+        );
+        this.camera.position.set(0, 0, 140);
+
+        // 3. Renderer
+        this.renderer = new THREE.WebGLRenderer({
+            antialias: true,
+            alpha: true
+        });
+        this.renderer.outputColorSpace = THREE.SRGBColorSpace;
         this.renderer.setSize(window.innerWidth, window.innerHeight);
+        this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
         container.appendChild(this.renderer.domElement);
 
-        this.targetPositions = new Float32Array(this.maxParticles * 3);
-        this.explodedPositions = new Float32Array(this.maxParticles * 3); // Buffer extra
-        this.types = new Uint8Array(this.maxParticles);
-        this.baseColors = new Float32Array(this.maxParticles * 3);
-        
-        this.particleSystem = this.createSystem();
+        // 4. Orbit Controls
+        this.controls = new OrbitControls(
+            this.camera,
+            this.renderer.domElement
+        );
+        this.controls.enableDamping = true;
+        this.controls.dampingFactor = 0.05;
+        this.controls.enableZoom = true;
+        this.controls.minDistance = 50;
+        this.controls.maxDistance = 400;
+        this.controls.enabled = false; // Se activa al entrar a la App
+
+        // 5. Luces
+        const amb = new THREE.AmbientLight(0xffffff, 0.4);
+        this.scene.add(amb);
+        const dir = new THREE.DirectionalLight(0xffffff, 1.5);
+        dir.position.set(50, 100, 100);
+        this.scene.add(dir);
+
+        // 6. Textura
+        const texture = this.getTexture();
+
+        // 7. Sistema de Partículas
+        this.particleGeo = new THREE.BufferGeometry();
+        this.particleGeo.setAttribute(
+            "position",
+            new THREE.BufferAttribute(
+                new Float32Array(this.maxParticles * 3),
+                3
+            )
+        );
+        this.particleGeo.setAttribute(
+            "color",
+            new THREE.BufferAttribute(
+                new Float32Array(this.maxParticles * 3),
+                3
+            )
+        );
+
+        this.particleMat = new THREE.PointsMaterial({
+            size: 1.5,
+            map: texture,
+            vertexColors: true,
+            blending: THREE.AdditiveBlending,
+            depthWrite: false,
+            transparent: true,
+            opacity: 0.95
+        });
+        this.particleSystem = new THREE.Points(
+            this.particleGeo,
+            this.particleMat
+        );
         this.scene.add(this.particleSystem);
+
+        // 8. Grupo Sólido
+        this.solidGroup = new THREE.Group();
+        this.scene.add(this.solidGroup);
+
+        this.matBody = new THREE.MeshStandardMaterial({
+            color: 0x222222,
+            roughness: 0.3,
+            metalness: 0.1,
+            side: THREE.DoubleSide
+        });
+        this.matDriver = new THREE.MeshStandardMaterial({
+            color: 0x111111,
+            roughness: 0.4,
+            metalness: 0.6
+        });
+        this.matPort = new THREE.MeshStandardMaterial({
+            color: 0xc5a96e,
+            roughness: 0.2,
+            metalness: 0.8
+        });
+
+        window.addEventListener("resize", () => {
+            this.camera.aspect = window.innerWidth / window.innerHeight;
+            this.camera.updateProjectionMatrix();
+            this.renderer.setSize(window.innerWidth, window.innerHeight);
+        });
     }
 
-    private createSystem(): THREE.Points {
-        // ... (Igual que antes)
-        const pos = new Float32Array(this.maxParticles*3);
-        const col = new Float32Array(this.maxParticles*3);
-        const geo = new THREE.BufferGeometry();
-        geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
-        geo.setAttribute('color', new THREE.BufferAttribute(col, 3));
-        const mat = new THREE.PointsMaterial({ size: 1.2, vertexColors: true, blending: THREE.AdditiveBlending, transparent: true, opacity: 0.8 });
-        return new THREE.Points(geo, mat);
+    private getTexture(): THREE.Texture {
+        const c = document.createElement("canvas");
+        c.width = 32;
+        c.height = 32;
+        const ctx = c.getContext("2d");
+        if (ctx) {
+            const g = ctx.createRadialGradient(16, 16, 0, 16, 16, 16);
+            g.addColorStop(0, "rgba(255,255,255,1)");
+            g.addColorStop(0.4, "rgba(255,255,255,0.1)");
+            g.addColorStop(1, "rgba(0,0,0,0)");
+            ctx.fillStyle = g;
+            ctx.fillRect(0, 0, 32, 32);
+        }
+        const t = new THREE.Texture(c);
+        t.needsUpdate = true;
+        return t;
     }
 
-    public updateGeometry(params: DesignParams, result: SimulationResult): void {
-        let idx = 0;
-        const sf = 2.0; 
-        const W = params.width * sf;
-        const H = params.height * sf;
-        const D = params.depth * sf;
-        const driverR = (params.driverSize * 2.54 * sf) / 2;
+    // --- CENTRADO INTELIGENTE ---
+    public setCenterOffset(isSidebarOpen: boolean) {
+        // Movemos el "Target" (punto de mira) a la izquierda (-35)
+        // Esto hace que la caja parezca estar a la derecha, centrada en el espacio vacío.
+        this.targetTargetX = isSidebarOpen ? -35 : 0;
+    }
 
-        // Calculamos posiciones "Normales" y "Explosivas"
-        // 1. BOX (Paredes)
-        // Separamos paredes para la explosión
-        idx = this.generateBoxExploded(idx, W, H, D, 8000);
+    // --- GENERADOR DE PUNTOS ---
+    private addPoints(
+        geometry: THREE.BufferGeometry,
+        type: number,
+        zOffset: number = 0
+    ) {
+        const pos = geometry.attributes.position.array;
+        let r = 0,
+            g = 0,
+            b = 0;
+        for (let i = 0; i < pos.length; i += 3) {
+            this.speakerTargets.push(pos[i], pos[i + 1], pos[i + 2] + zOffset);
 
-        // 2. DRIVER
-        let driverZ = D/2;
-        if (params.boxType === BoxType.BANDPASS_4TH) driverZ = (params.chamberRatio - 0.5) * D;
-        idx = this.generateDriver(idx, driverR, driverZ, D, 3000); // Pasamos D para calcular explosión Z
+            // Explosión en anillo
+            const angle = Math.random() * Math.PI * 2;
+            const rad = 180 + Math.random() * 150;
+            this.explodedTargets.push(
+                Math.cos(angle) * rad,
+                (Math.random() - 0.5) * 300,
+                Math.sin(angle) * rad - 50
+            );
 
-        // 3. PUERTO
+            this.types.push(type);
+
+            // Colores Definidos
+            if (type === 0) {
+                // Caja: Gris Medio (Visible)
+                const v = Math.random() * 0.2 + 0.3;
+                r = v;
+                g = v;
+                b = v;
+            } else if (type === 1) {
+                r = 0.2;
+                g = 0.2;
+                b = 0.2;
+            } // Cono
+            else if (type === 2) {
+                r = this.GOLD.r;
+                g = this.GOLD.g;
+                b = this.GOLD.b;
+            } // Tweeter
+            else if (type === 3) {
+                r = this.GOLD.r * 0.8;
+                g = this.GOLD.g * 0.8;
+                b = this.GOLD.b * 0.8;
+            } // Borde
+
+            this.baseColors.push(r, g, b);
+        }
+    }
+
+    public updateGeometry(
+        params: DesignParams,
+        result: SimulationResult
+    ): void {
+        if (params.isSolid) {
+            this.particleSystem.visible = false;
+            this.solidGroup.visible = true;
+            this.buildSolid(params, result);
+        } else {
+            this.particleSystem.visible = true;
+            this.solidGroup.visible = false;
+            this.buildParticles(params);
+        }
+    }
+
+    private buildParticles(params: DesignParams) {
+        this.speakerTargets = [];
+        this.explodedTargets = [];
+        this.types = [];
+        this.baseColors = [];
+
+        // 1. Caja
+        const boxGeo = new THREE.BoxGeometry(
+            params.width,
+            params.height,
+            params.depth,
+            30,
+            40,
+            30
+        );
+        this.addPoints(boxGeo, 0, 0);
+
+        // 2. Driver
+        let dY = 0;
+        if (
+            params.speakerType === "tower" ||
+            params.speakerType === "bookshelf"
+        )
+            dY = -params.height * 0.15;
+        const fZ = params.depth / 2;
+        const dR = (params.driverSize * 2.54) / 2;
+
+        for (let r = 1; r <= dR; r += 0.5) {
+            const rg = new THREE.RingGeometry(r, r + 0.25, 64);
+            const cd = (r / dR) * 6;
+            rg.translate(0, dY, fZ - 6 + cd);
+            this.addPoints(rg, 1);
+        }
+        for (let r = dR; r <= dR + 2; r += 0.3) {
+            const rg = new THREE.RingGeometry(r, r + 0.2, 64);
+            rg.translate(0, dY, fZ);
+            this.addPoints(rg, 3);
+        }
+
+        // 3. Tweeter
+        if (
+            ["tower", "bookshelf", "studio", "hifi_home"].includes(
+                params.speakerType
+            ) ||
+            params.application === "hifi_home"
+        ) {
+            const tY = params.height / 4;
+            for (let r = 0.2; r <= 2.5; r += 0.2) {
+                const rg = new THREE.RingGeometry(r, r + 0.1, 32);
+                rg.translate(0, tY, fZ + 0.5);
+                this.addPoints(rg, 2);
+            }
+        }
+
+        const cnt = this.speakerTargets.length / 3;
+        this.particleGeo.setAttribute(
+            "position",
+            new THREE.BufferAttribute(new Float32Array(this.speakerTargets), 3)
+        );
+        this.particleGeo.setAttribute(
+            "color",
+            new THREE.BufferAttribute(new Float32Array(this.baseColors), 3)
+        );
+        this.particleGeo.setDrawRange(0, cnt);
+        this.particleGeo.attributes.position.needsUpdate = true;
+        this.particleGeo.attributes.color.needsUpdate = true;
+    }
+
+    private buildSolid(params: DesignParams, result: SimulationResult) {
+        while (this.solidGroup.children.length > 0)
+            this.solidGroup.remove(this.solidGroup.children[0]);
+        const box = new THREE.Mesh(
+            new THREE.BoxGeometry(params.width, params.height, params.depth),
+            this.matBody
+        );
+        this.matBody.transparent = params.isTransparent;
+        this.matBody.opacity = params.isTransparent ? 0.3 : 1;
+        this.solidGroup.add(box);
+
+        const dR = (params.driverSize * 2.54) / 2;
+        const cyl = new THREE.Mesh(
+            new THREE.CylinderGeometry(dR, dR * 0.7, 5, 32),
+            this.matDriver
+        );
+        cyl.rotateX(Math.PI / 2);
+        let dY = 0;
+        if (
+            params.speakerType === "tower" ||
+            params.speakerType === "bookshelf"
+        )
+            dY = -params.height * 0.15;
+        cyl.position.set(0, dY, params.depth / 2);
+        this.solidGroup.add(cyl);
+
+        // Puerto simple para sólido
         if (params.boxType !== BoxType.SEALED) {
-            const pLen = result.portLength * sf;
-            const portColor = result.isPortCollision ? this.redColor : this.goldColor;
-            const pY = (params.boxType === BoxType.BANDPASS_4TH) ? H*0.25 : -H*0.35;
-            idx = this.generatePort(idx, params, pLen, pY, D/2, D, portColor, 4000);
+            const pLen = result.portLength * 2.0;
+            const pM = new THREE.Mesh(
+                new THREE.CylinderGeometry(
+                    params.port.diameter,
+                    params.port.diameter,
+                    pLen,
+                    32
+                ),
+                this.matPort
+            );
+            pM.rotateX(Math.PI / 2);
+            pM.position.set(
+                0,
+                params.boxType === BoxType.BANDPASS_4TH
+                    ? params.height * 0.25
+                    : -params.height * 0.35,
+                params.depth / 2 - pLen / 2
+            );
+            this.solidGroup.add(pM);
         }
-
-        // Limpieza
-        for(let i=idx; i<this.maxParticles; i++) {
-            this.targetPositions[i*3] = 0; this.explodedPositions[i*3]=0;
-        }
-
-        // TRANSPARENCIA
-        const mat = this.particleSystem.material as THREE.PointsMaterial;
-        mat.opacity = params.isTransparent ? 0.2 : 0.85;
-        mat.size = params.isTransparent ? 0.8 : 1.2;
     }
 
-    // Generador de Caja con Lógica Explosiva
-    private generateBoxExploded(startIdx: number, W: number, H: number, D: number, count: number): number {
-        let idx = startIdx;
-        const color = new THREE.Color(0.15, 0.15, 0.15);
-        const explodeDist = 40; // Distancia de separación
+    // --- LOOP ANIMACIÓN ---
+    public animate(
+        mx: number,
+        my: number,
+        isExploded: boolean,
+        isAuto: boolean
+    ): void {
+        const time = this.clock.getElapsedTime();
+        const pos = this.particleGeo.attributes.position.array as Float32Array;
+        const col = this.particleGeo.attributes.color.array as Float32Array;
 
-        for(let i=0; i<count; i++) {
-            const face = Math.floor(Math.random()*6);
-            let x=0, y=0, z=0;
-            let ex=0, ey=0, ez=0; // Exploded coords
-            const u = Math.random()-0.5; const v = Math.random()-0.5;
-            
-            // Lógica: Si es cara derecha (face 0), x es positivo, exploded x suma distancia
-            if(face===0){ x=0.5*W; y=u*H; z=v*D;      ex=x+explodeDist; ey=y; ez=z; } 
-            else if(face===1){ x=-0.5*W; y=u*H; z=v*D; ex=x-explodeDist; ey=y; ez=z; }
-            else if(face===2){ x=u*W; y=0.5*H; z=v*D;  ex=x; ey=y+explodeDist; ez=z; } 
-            else if(face===3){ x=u*W; y=-0.5*H; z=v*D; ex=x; ey=y-explodeDist; ez=z; }
-            else if(face===4){ x=u*W; y=v*H; z=0.5*D;  ex=x; ey=y; ez=z+explodeDist; } 
-            else if(face===5){ x=u*W; y=v*H; z=-0.5*D; ex=x; ey=y; ez=z-explodeDist; }
-            
-            this.setPos(idx, x,y,z, ex,ey,ez);
-            this.types[idx] = 0; 
-            this.setBaseColor(idx, color);
-            idx++;
+        const tgt = isExploded ? this.explodedTargets : this.speakerTargets;
+        const spd = isExploded ? 0.03 : 0.1;
+        const beat = Math.pow((Math.sin(time * 3) + 1) / 2, 8);
+
+        const count = this.speakerTargets.length;
+        for (let i = 0; i < count; i += 3) {
+            const idx = i / 3;
+            let tx = tgt[i],
+                ty = tgt[i + 1],
+                tz = tgt[i + 2];
+
+            if (!isExploded) {
+                const type = this.types[idx];
+                if (type === 1 || type === 3) {
+                    const mv = beat * 1.5;
+                    tz += mv;
+                    const l = mv * 0.15;
+                    col[i] = this.baseColors[i] + l;
+                    col[i + 1] = this.baseColors[i + 1] + l;
+                    col[i + 2] = this.baseColors[i + 2] + l;
+                } else {
+                    col[i] = this.baseColors[i];
+                    col[i + 1] = this.baseColors[i + 1];
+                    col[i + 2] = this.baseColors[i + 2];
+                }
+            } else {
+                ty += Math.sin(time + tx * 0.02) * 1.5;
+            }
+            pos[i] += (tx - pos[i]) * spd;
+            pos[i + 1] += (ty - pos[i + 1]) * spd;
+            pos[i + 2] += (tz - pos[i + 2]) * spd;
         }
-        return idx;
-    }
+        this.particleGeo.attributes.position.needsUpdate = true;
+        this.particleGeo.attributes.color.needsUpdate = true;
 
-    private generateDriver(startIdx: number, r: number, z: number, D: number, count: number): number {
-        let idx = startIdx;
-        const color = new THREE.Color(0.3, 0.3, 0.3);
-        const explodeZ = z + 60; // El driver sale volando hacia el frente
-        
-        for(let i=0; i<count; i++) {
-            const rad = Math.sqrt(Math.random()) * r;
-            const theta = Math.random()*2*Math.PI;
-            const depth = (rad/r)*(r*0.4);
-            
-            const x = rad * Math.cos(theta);
-            const y = rad * Math.sin(theta);
-            const finalZ = z - depth;
+        // --- LÓGICA DE CONTROL Y CENTRADO ---
+        if (isAuto && !isExploded) {
+            // MODO INICIO
+            this.controls.enabled = false;
+            this.particleSystem.rotation.y += 0.003;
+            this.solidGroup.rotation.y += 0.003;
+            this.particleSystem.rotation.x = Math.sin(time * 0.5) * 0.15;
+            this.solidGroup.rotation.x = Math.sin(time * 0.5) * 0.15;
 
-            this.setPos(idx, x, y, finalZ, x, y, explodeZ - depth);
-            this.types[idx] = 1;
-            this.setBaseColor(idx, color);
-            idx++;
-        }
-        return idx;
-    }
+            // Reseteamos el Target
+            this.controls.target.set(0, 0, 0);
+        } else {
+            // MODO APP
+            this.controls.enabled = true;
+            this.controls.update();
 
-    private generatePort(startIdx: number, params: DesignParams, len: number, y: number, zStart: number, D: number, color: THREE.Color, count: number): number {
-        let idx = startIdx;
-        const sf = 2.0;
-        const explodeZ = zStart + 50; // Puerto sale con el driver
+            // Paramos la rotación automática suavemente
+            this.particleSystem.rotation.x *= 0.9;
+            this.particleSystem.rotation.y *= 0.9;
+            this.solidGroup.rotation.x *= 0.9;
+            this.solidGroup.rotation.y *= 0.9;
 
-        for(let i=0; i<count; i++) {
-            const t = Math.random(); const zPos = t * len;
-            let px=0, py=0;
-            // ... (Lógica forma puerto igual que antes)
-             const theta = Math.random()*2*Math.PI;
-             let rad = (params.port.diameter * sf) / 2;
-             if (params.port.type === PortType.AERO_FLARE) {
-                 const flare = Math.pow((2*t - 1), 6) * 0.6;
-                 rad = rad * (1 + flare);
-             }
-             px = rad * Math.cos(theta); py = rad * Math.sin(theta);
-            // ... (Fin lógica forma)
-
-            const pz = zStart - zPos;
-            this.setPos(idx, px, py+y, pz, px, py+y, explodeZ - zPos);
-            this.types[idx] = 4;
-            this.setBaseColor(idx, color);
-            idx++;
-        }
-        return idx;
-    }
-
-    private setPos(i: number, x:number, y:number, z:number, ex:number, ey:number, ez:number) {
-        this.targetPositions[i*3] = x; this.targetPositions[i*3+1] = y; this.targetPositions[i*3+2] = z;
-        this.explodedPositions[i*3] = ex; this.explodedPositions[i*3+1] = ey; this.explodedPositions[i*3+2] = ez;
-    }
-
-    private setBaseColor(i: number, c: THREE.Color) {
-        this.baseColors[i*3] = c.r; this.baseColors[i*3+1] = c.g; this.baseColors[i*3+2] = c.b;
-    }
-
-    public animate(mouseX: number, mouseY: number, isExploded: boolean): void {
-        const positions = this.particleSystem.geometry.attributes.position.array as Float32Array;
-        const colors = this.particleSystem.geometry.attributes.color.array as Float32Array;
-        const lerp = 0.08;
-
-        // Seleccionar array objetivo según estado
-        const targetArr = isExploded ? this.explodedPositions : this.targetPositions;
-
-        for(let i=0; i<this.maxParticles; i++) {
-            const i3 = i*3;
-            // Interpolación suave entre posiciones
-            positions[i3]   += (targetArr[i3]   - positions[i3])   * lerp;
-            positions[i3+1] += (targetArr[i3+1] - positions[i3+1]) * lerp;
-            positions[i3+2] += (targetArr[i3+2] - positions[i3+2]) * lerp;
-            
-            colors[i3] = this.baseColors[i3];
-            colors[i3+1] = this.baseColors[i3+1];
-            colors[i3+2] = this.baseColors[i3+2];
+            // Centrado: Movemos el TARGET de la cámara
+            this.currentTargetX +=
+                (this.targetTargetX - this.currentTargetX) * 0.05;
+            this.controls.target.setX(this.currentTargetX);
         }
 
-        this.particleSystem.geometry.attributes.position.needsUpdate = true;
-        this.particleSystem.geometry.attributes.color.needsUpdate = true;
-        this.particleSystem.rotation.y += 0.05 * (mouseX - this.particleSystem.rotation.y);
-        this.particleSystem.rotation.x += 0.05 * (-mouseY - this.particleSystem.rotation.x);
         this.renderer.render(this.scene, this.camera);
     }
 }

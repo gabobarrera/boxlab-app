@@ -1,197 +1,751 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="es" class="dark">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BOXLAB PRO ULTIMATE</title>
-</head>
-<body class="antialiased font-sans bg-black text-white overflow-hidden">
-    
-    <div id="canvas-container" class="fixed inset-0 z-0"></div>
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>BOXLAB - System Dashboard</title>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+        <link
+            href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&family=Fira+Code:wght@400;600&display=swap"
+            rel="stylesheet"
+        />
+        <style>
+            body {
+                background-color: var(--brand-black);
+                color: white;
+                font-family: "Inter", sans-serif;
+            }
+            #canvas-container {
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                z-index: 0;
+            }
+            /* Sistema de Paneles */
+            .ui-panel {
+                transition:
+                    opacity 0.8s cubic-bezier(0.22, 1, 0.36, 1),
+                    transform 0.8s cubic-bezier(0.22, 1, 0.36, 1);
+            }
+            .hidden-panel {
+                opacity: 0;
+                pointer-events: none;
+                transform: scale(0.98) translateY(10px);
+            }
+            .visible-panel {
+                opacity: 1;
+                pointer-events: auto;
+                transform: scale(1) translateY(0);
+            }
 
-    <section id="hero-section" class="relative z-30 h-screen flex flex-col justify-center items-center text-center bg-black/40 backdrop-blur-[2px] transition-all duration-1000">
-        <div class="space-y-6 max-w-4xl px-4">
-            <h1 class="text-7xl md:text-9xl font-bold tracking-tighter text-white mb-2">
+            /* Glassmorphism Gold */
+            .glass-card {
+                background: rgba(10, 10, 10, 0.6);
+                backdrop-filter: blur(12px);
+                border: 1px solid rgba(255, 255, 255, 0.08);
+                border-left: 2px solid #c5a96e;
+                box-shadow: 0 4px 30px rgba(0, 0, 0, 0.3);
+            }
+
+            /* Inputs estilo B&O */
+            .bo-input {
+                background: rgba(255, 255, 255, 0.03);
+                border: 1px solid rgba(255, 255, 255, 0.1);
+                color: white;
+                font-family: "Fira Code", monospace;
+                transition: all 0.2s;
+            }
+            .bo-input:focus {
+                border-color: #c5a96e;
+                outline: none;
+                background: rgba(197, 169, 110, 0.05);
+            }
+
+            /* Scrollbar */
+            .custom-scroll::-webkit-scrollbar {
+                width: 4px;
+            }
+            .custom-scroll::-webkit-scrollbar-track {
+                background: transparent;
+            }
+            .custom-scroll::-webkit-scrollbar-thumb {
+                background: #333;
+                border-radius: 2px;
+            }
+            .custom-scroll::-webkit-scrollbar-thumb:hover {
+                background: #c5a96e;
+            }
+
+            /* Botones Wizard */
+            .wiz-btn {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                height: 100%;
+                width: 100%;
+                border-radius: 4px;
+                cursor: pointer;
+                transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+                background: rgba(255, 255, 255, 0.02);
+            }
+            .wiz-btn:hover {
+                transform: translateY(-2px);
+                background: rgba(197, 169, 110, 0.1);
+                box-shadow: 0 10px 20px -5px rgba(0, 0, 0, 0.5);
+            }
+
+            /* Sliders */
+            input[type="range"] {
+                -webkit-appearance: none;
+                background: transparent;
+                cursor: pointer;
+            }
+            input[type="range"]::-webkit-slider-thumb {
+                -webkit-appearance: none;
+                height: 12px;
+                width: 12px;
+                border-radius: 50%;
+                background: #c5a96e;
+                margin-top: -5px;
+                box-shadow: 0 0 10px rgba(197, 169, 110, 0.5);
+            }
+            input[type="range"]::-webkit-slider-runnable-track {
+                width: 100%;
+                height: 2px;
+                background: #333;
+            }
+        </style>
+    </head>
+    <body class="antialiased font-sans">
+        <div id="canvas-container"></div>
+        <div
+            id="hero-section"
+            class="ui-panel visible-panel fixed inset-0 z-10 flex flex-col justify-center items-center bg-black/30 backdrop-blur-[3px]"
+        >
+            <h1
+                class="text-7xl md:text-9xl font-bold tracking-tighter mb-2 text-white text-center drop-shadow-2xl"
+            >
                 BOXLAB
             </h1>
-            <p class="text-[#C5A96E] tracking-[0.4em] text-sm md:text-base uppercase font-mono border-t border-b border-[#C5A96E]/30 py-4 inline-block">
+            <p
+                class="text-[#C5A96E] tracking-[0.4em] text-xs md:text-sm mb-12 uppercase font-mono border-y border-[#C5A96E]/30 py-4"
+            >
                 Precision Acoustic Engineering
             </p>
-            <div class="pt-12">
-                <button id="btn-start-app" class="group relative px-12 py-4 bg-transparent overflow-hidden border border-[#C5A96E] transition-all duration-300 hover:shadow-[0_0_30px_rgba(197,169,110,0.3)]">
-                    <div class="absolute inset-0 w-0 bg-[#C5A96E] transition-all duration-[250ms] ease-out group-hover:w-full opacity-100"></div>
-                    <span class="relative text-[#C5A96E] group-hover:text-black font-bold tracking-widest text-xs uppercase flex items-center justify-center gap-3 transition-colors">
-                        Iniciar Proyecto
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
-                    </span>
+            <button
+                id="start-btn"
+                class="group relative px-14 py-5 bg-transparent overflow-hidden border border-[#C5A96E]/40 hover:border-[#C5A96E] transition-all duration-500 cursor-pointer"
+            >
+                <div
+                    class="absolute inset-0 w-0 bg-[#C5A96E] transition-all duration-[400ms] ease-out group-hover:w-full opacity-10"
+                ></div>
+                <span
+                    class="relative text-white group-hover:text-[#C5A96E] font-mono tracking-widest text-xs uppercase flex items-center gap-4 font-bold"
+                >
+                    <span
+                        class="w-1.5 h-1.5 bg-[#C5A96E] rounded-full animate-pulse shadow-[0_0_10px_#C5A96E]"
+                    ></span
+                    >Iniciar Sistema</span
+                >
+            </button>
+            <div
+                class="absolute bottom-8 flex gap-4 text-[10px] text-gray-500 font-mono tracking-widest"
+            >
+                <span>V.2.5.0</span>
+                <span>|</span>
+                <span>SIMULATION CORE ACTIVE</span>
+            </div>
+        </div>
+        <div
+            id="project-wizard"
+            class="hidden-panel fixed inset-0 z-50 bg-black/95 backdrop-blur-xl flex flex-col justify-center items-center text-center p-4 ui-panel"
+        >
+            <h2 class="text-3xl font-bold mb-2 text-white tracking-tight">
+                CONFIGURACIÓN DE MISIÓN
+            </h2>
+            <p
+                class="text-[#C5A96E] text-xs font-mono mb-10 tracking-widest opacity-80"
+            >
+                CALIBRANDO PARÁMETROS DE SIMULACIÓN
+            </p>
+            <div
+                id="step-1"
+                class="grid grid-cols-2 md:grid-cols-4 gap-4 w-full max-w-5xl"
+            >
+                <button
+                    onclick="selectApp('car_audio')"
+                    class="wiz-btn border border-white/10 hover:border-[#C5A96E]"
+                >
+                    <span
+                        class="text-4xl mb-4 grayscale group-hover:grayscale-0 transition-all"
+                        >🚗</span
+                    ><span class="font-bold text-xs text-white tracking-widest"
+                        >CAR AUDIO</span
+                    ></button
+                ><button
+                    onclick="selectApp('hifi_home')"
+                    class="wiz-btn border border-white/10 hover:border-[#C5A96E]"
+                >
+                    <span
+                        class="text-4xl mb-4 grayscale group-hover:grayscale-0 transition-all"
+                        >🏠</span
+                    ><span class="font-bold text-xs text-white tracking-widest"
+                        >HI-FI HOME</span
+                    ></button
+                ><button
+                    onclick="selectApp('studio')"
+                    class="wiz-btn border border-white/10 hover:border-[#C5A96E]"
+                >
+                    <span
+                        class="text-4xl mb-4 grayscale group-hover:grayscale-0 transition-all"
+                        >🎙️</span
+                    ><span class="font-bold text-xs text-white tracking-widest"
+                        >ESTUDIO</span
+                    ></button
+                ><button
+                    onclick="selectApp('pa_live')"
+                    class="wiz-btn border border-white/10 hover:border-[#C5A96E]"
+                >
+                    <span
+                        class="text-4xl mb-4 grayscale group-hover:grayscale-0 transition-all"
+                        >🔊</span
+                    ><span class="font-bold text-xs text-white tracking-widest"
+                        >PA / LIVE</span
+                    >
                 </button>
             </div>
-            <p class="text-gray-500 text-xs mt-8 font-mono">v2.1.0 | Simulation Engine Active</p>
+            <div
+                id="step-2"
+                class="hidden grid grid-cols-2 md:grid-cols-4 gap-4 w-full max-w-5xl"
+            >
+                <button
+                    onclick="selectSpeaker('subwoofer_box')"
+                    class="wiz-btn border border-white/10 hover:border-[#C5A96E]"
+                >
+                    <span class="text-4xl mb-4">📦</span
+                    ><span class="font-bold text-xs text-white tracking-widest"
+                        >SUBWOOFER</span
+                    ></button
+                ><button
+                    onclick="selectSpeaker('tower')"
+                    class="wiz-btn border border-white/10 hover:border-[#C5A96E]"
+                >
+                    <span class="text-4xl mb-4">🗼</span
+                    ><span class="font-bold text-xs text-white tracking-widest"
+                        >TORRE</span
+                    ></button
+                ><button
+                    onclick="selectSpeaker('bookshelf')"
+                    class="wiz-btn border border-white/10 hover:border-[#C5A96E]"
+                >
+                    <span class="text-4xl mb-4">📚</span
+                    ><span class="font-bold text-xs text-white tracking-widest"
+                        >BOOKSHELF</span
+                    ></button
+                ><button
+                    onclick="selectSpeaker('soundbar')"
+                    class="wiz-btn border border-white/10 hover:border-[#C5A96E]"
+                >
+                    <span class="text-4xl mb-4">➖</span
+                    ><span class="font-bold text-xs text-white tracking-widest"
+                        >SOUNDBAR</span
+                    >
+                </button>
+            </div>
         </div>
-    </section>
+        <div
+            id="app-interface"
+            class="hidden-panel fixed inset-0 z-20 flex flex-col ui-panel pointer-events-none"
+        >
+            <header
+                class="absolute top-0 left-0 w-full p-6 flex justify-between items-start z-30 pointer-events-auto"
+            >
+                <div class="flex gap-4">
+                    <button
+                        id="btn-home"
+                        class="flex items-center gap-2 text-[10px] text-[#C5A96E] border border-[#C5A96E]/30 px-4 py-2 hover:bg-[#C5A96E] hover:text-black transition-colors uppercase tracking-widest bg-black/80 backdrop-blur font-bold"
+                    >
+                        <svg
+                            class="w-3 h-3"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                        >
+                            <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                stroke-width="2"
+                                d="M10 19l-7-7m0 0l7-7m-7 7h18"
+                            ></path>
+                        </svg>
+                        SALIR</button
+                    ><a
+                        href="https://www.paypal.com"
+                        target="_blank"
+                        class="flex items-center gap-2 text-[10px] text-black font-bold bg-[#C5A96E] border border-[#C5A96E] px-4 py-2 hover:bg-white hover:border-white transition-all uppercase tracking-widest shadow-[0_0_15px_rgba(197,169,110,0.4)] animate-pulse"
+                        ><svg
+                            class="w-3 h-3"
+                            fill="currentColor"
+                            viewBox="0 0 24 24"
+                        >
+                            <path
+                                d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"
+                            />
+                        </svg>
+                        DONAR</a
+                    >
+                </div>
+                <div class="flex gap-2">
+                    <button
+                        id="btn-solid"
+                        class="bg-black/80 backdrop-blur border border-white/20 p-3 hover:border-[#C5A96E] text-white transition-colors rounded-sm"
+                        title="Vista Sólida"
+                    >
+                        <svg
+                            class="w-4 h-4"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                        >
+                            <path
+                                d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"
+                                stroke-width="2"
+                            />
+                        </svg></button
+                    ><button
+                        id="btn-explode"
+                        class="bg-black/80 backdrop-blur border border-white/20 p-3 hover:border-[#C5A96E] text-white transition-colors rounded-sm"
+                        title="Vista Explosiva"
+                    >
+                        <svg
+                            class="w-4 h-4"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                        >
+                            <path
+                                d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"
+                                stroke-width="2"
+                            />
+                        </svg></button
+                    ><button
+                        id="btn-xray"
+                        class="bg-black/80 backdrop-blur border border-white/20 p-3 hover:border-[#C5A96E] text-white transition-colors rounded-sm"
+                        title="Rayos X"
+                    >
+                        <svg
+                            class="w-4 h-4"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                        >
+                            <path
+                                d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                                stroke-width="2"
+                            />
+                            <path
+                                d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                                stroke-width="2"
+                            />
+                        </svg>
+                    </button>
+                </div>
+            </header>
+            <aside
+                class="absolute left-0 top-0 h-full w-96 bg-black/85 backdrop-blur-xl border-r border-white/10 z-20 flex flex-col pt-20 pointer-events-auto shadow-2xl"
+            >
+                <div class="px-6 pb-4 border-b border-[#C5A96E]/30 mb-2">
+                    <h2 class="text-lg font-bold text-white tracking-widest">
+                        PANEL DE CONTROL
+                    </h2>
+                    <div class="flex items-center gap-2 mt-1">
+                        <div
+                            class="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"
+                        ></div>
+                        <p class="text-[10px] text-gray-400 font-mono">
+                            SYSTEM ONLINE
+                        </p>
+                    </div>
+                </div>
+                <div
+                    class="flex border-b border-white/10 text-[10px] font-bold uppercase text-gray-500 tracking-wider"
+                >
+                    <button
+                        id="tab-design"
+                        class="flex-1 py-3 text-[#C5A96E] border-b-2 border-[#C5A96E] bg-white/5 transition-colors"
+                    >
+                        Diseño</button
+                    ><button
+                        id="tab-analysis"
+                        class="flex-1 py-3 hover:bg-white/5 hover:text-white transition-colors"
+                    >
+                        Análisis</button
+                    ><button
+                        id="tab-build"
+                        class="flex-1 py-3 hover:bg-white/5 hover:text-white transition-colors"
+                    >
+                        Cortes
+                    </button>
+                </div>
+                <div class="flex-1 overflow-y-auto p-6 custom-scroll">
+                    <div
+                        id="panel-design"
+                        class="space-y-6 animate-in slide-in-from-left-4 fade-in duration-300"
+                    >
+                        <div>
+                            <label
+                                class="text-[9px] text-[#C5A96E] tracking-widest font-mono block mb-2 uppercase"
+                                >Driver / Subwoofer</label
+                            ><select
+                                id="sel-driver"
+                                class="bo-input w-full py-2 px-3 text-xs text-white bg-white/5 border border-white/10 rounded-sm"
+                            ></select>
+                        </div>
+                        <div class="h-px bg-white/10 w-full"></div>
+                        <div class="space-y-4">
+                            <h3
+                                class="text-white text-[10px] font-bold uppercase tracking-widest"
+                            >
+                                Dimensiones Externas (cm)
+                            </h3>
+                            <div>
+                                <div
+                                    class="flex justify-between items-end mb-1"
+                                >
+                                    <label
+                                        class="text-[9px] text-gray-500 font-mono"
+                                        >ANCHO (W)</label
+                                    ><input
+                                        type="number"
+                                        id="num-width"
+                                        class="bg-transparent text-right w-12 text-xs text-[#C5A96E] border-b border-gray-700 focus:border-[#C5A96E] outline-none font-mono"
+                                    />
+                                </div>
+                                <input
+                                    type="range"
+                                    id="slider-width"
+                                    min="10"
+                                    max="120"
+                                    class="w-full h-1 bg-gray-700 rounded-lg appearance-none cursor-pointer"
+                                />
+                            </div>
+                            <div>
+                                <div
+                                    class="flex justify-between items-end mb-1"
+                                >
+                                    <label
+                                        class="text-[9px] text-gray-500 font-mono"
+                                        >ALTO (H)</label
+                                    ><input
+                                        type="number"
+                                        id="num-height"
+                                        class="bg-transparent text-right w-12 text-xs text-[#C5A96E] border-b border-gray-700 focus:border-[#C5A96E] outline-none font-mono"
+                                    />
+                                </div>
+                                <input
+                                    type="range"
+                                    id="slider-height"
+                                    min="10"
+                                    max="150"
+                                    class="w-full h-1 bg-gray-700 rounded-lg appearance-none cursor-pointer"
+                                />
+                            </div>
+                            <div>
+                                <div
+                                    class="flex justify-between items-end mb-1"
+                                >
+                                    <label
+                                        class="text-[9px] text-gray-500 font-mono"
+                                        >PROFUNDIDAD (D)</label
+                                    ><input
+                                        type="number"
+                                        id="num-depth"
+                                        class="bg-transparent text-right w-12 text-xs text-[#C5A96E] border-b border-gray-700 focus:border-[#C5A96E] outline-none font-mono"
+                                    />
+                                </div>
+                                <input
+                                    type="range"
+                                    id="slider-depth"
+                                    min="10"
+                                    max="100"
+                                    class="w-full h-1 bg-gray-700 rounded-lg appearance-none cursor-pointer"
+                                />
+                            </div>
+                        </div>
+                        <div class="h-px bg-white/10 w-full"></div>
+                        <div>
+                            <label
+                                class="text-[9px] text-gray-500 block mb-1 uppercase tracking-widest"
+                                >Topología</label
+                            ><select
+                                id="sel-box-type"
+                                class="bo-input w-full py-2 px-3 mb-3 text-xs bg-white/5 border border-white/10 rounded-sm"
+                            >
+                                <option value="ported">
+                                    Bass Reflex (Porteada)
+                                </option>
+                                <option value="sealed">Sellada</option>
+                                <option value="bandpass4">
+                                    Bandpass 4th Order
+                                </option></select
+                            ><label
+                                class="text-[9px] text-gray-500 block mb-1 uppercase tracking-widest"
+                                >Refuerzos</label
+                            ><select
+                                id="sel-bracing"
+                                class="bo-input w-full py-2 px-3 mb-4 text-xs bg-white/5 border border-white/10 rounded-sm"
+                            >
+                                <option value="window">Ventana</option>
+                                <option value="cross">Matriz Cruzada</option>
+                                <option value="none">Sin Refuerzos</option>
+                            </select>
+                        </div>
+                        <div
+                            id="sec-bandpass"
+                            class="hidden border-l-2 border-[#C5A96E] pl-3 py-1"
+                        >
+                            <label
+                                class="text-[9px] text-[#C5A96E] block mb-1 font-bold"
+                                >RATIO CÁMARAS</label
+                            ><input
+                                type="range"
+                                id="input-ratio"
+                                min="0.2"
+                                max="0.8"
+                                step="0.05"
+                                value="0.5"
+                            />
+                        </div>
+                        <div
+                            id="sec-port"
+                            class="bg-white/5 p-3 rounded border border-white/5"
+                        >
+                            <h3
+                                class="text-[#C5A96E] text-[10px] font-mono uppercase mb-3 border-b border-white/10 pb-1"
+                            >
+                                Configuración Puerto
+                            </h3>
+                            <select
+                                id="sel-port-type"
+                                class="bo-input w-full py-1 px-2 mb-3 text-[10px] bg-black border border-white/20"
+                            >
+                                <option value="aero">Aeroport</option>
+                                <option value="circular">Tubo PVC</option>
+                                <option value="slot">Slot</option>
+                            </select>
+                            <div class="flex justify-between mb-4 items-center">
+                                <label
+                                    class="text-[9px] text-gray-300 font-bold"
+                                    >FRECUENCIA (HZ)</label
+                                ><input
+                                    id="in-freq"
+                                    type="number"
+                                    value="36"
+                                    class="bg-transparent border-b border-[#C5A96E] text-center w-14 text-sm font-bold text-white focus:outline-none"
+                                />
+                            </div>
+                            <div id="div-circ">
+                                <div
+                                    class="flex justify-between items-end mb-1"
+                                >
+                                    <label class="text-[9px] text-gray-500"
+                                        >DIÁMETRO</label
+                                    ><input
+                                        type="number"
+                                        id="num-diam"
+                                        class="bg-transparent text-right w-10 text-[10px] text-white border-b border-gray-700"
+                                    />
+                                </div>
+                                <input
+                                    type="range"
+                                    id="slider-diam"
+                                    min="5"
+                                    max="30"
+                                    step="0.5"
+                                />
+                            </div>
+                            <div id="div-slot" class="hidden space-y-2">
+                                <div>
+                                    <div
+                                        class="flex justify-between items-end mb-1"
+                                    >
+                                        <label class="text-[9px] text-gray-500"
+                                            >ANCHO</label
+                                        ><input
+                                            type="number"
+                                            id="num-p-width"
+                                            class="bg-transparent text-right w-10 text-[10px] text-white border-b border-gray-700"
+                                        />
+                                    </div>
+                                    <input
+                                        type="range"
+                                        id="slider-p-width"
+                                        min="2"
+                                        max="50"
+                                        step="0.5"
+                                    />
+                                </div>
+                                <div>
+                                    <div
+                                        class="flex justify-between items-end mb-1"
+                                    >
+                                        <label class="text-[9px] text-gray-500"
+                                            >ALTO</label
+                                        ><input
+                                            type="number"
+                                            id="num-p-height"
+                                            class="bg-transparent text-right w-10 text-[10px] text-white border-b border-gray-700"
+                                        />
+                                    </div>
+                                    <input
+                                        type="range"
+                                        id="slider-p-height"
+                                        min="2"
+                                        max="20"
+                                        step="0.5"
+                                    />
+                                </div>
+                            </div>
+                            <div
+                                class="mt-3 flex justify-between items-center pt-2 border-t border-white/10"
+                            >
+                                <span class="text-[9px] text-gray-400"
+                                    >LARGO REQUERIDO</span
+                                ><span
+                                    id="disp-port-len"
+                                    class="text-sm font-mono text-[#C5A96E] font-bold"
+                                    >-- cm</span
+                                >
+                            </div>
+                        </div>
+                    </div>
+                    <div
+                        id="panel-analysis"
+                        class="hidden space-y-4 animate-in slide-in-from-left-4 fade-in duration-300"
+                    >
+                        <div class="glass-card p-4 rounded-sm">
+                            <div
+                                class="flex gap-3 mb-4 border-b border-white/10 pb-2"
+                            >
+                                <button
+                                    onclick="setGraph('freq')"
+                                    id="btn-g-freq"
+                                    class="text-[9px] uppercase font-bold text-[#C5A96E] border-b border-[#C5A96E] pb-1"
+                                >
+                                    Respuesta
+                                </button>
+                                <div class="w-px h-3 bg-white/20 my-auto"></div>
+                                <button
+                                    onclick="setGraph('exc')"
+                                    id="btn-g-exc"
+                                    class="text-[9px] uppercase font-bold text-gray-500 pb-1"
+                                >
+                                    Excursión
+                                </button>
+                                <div class="w-px h-3 bg-white/20 my-auto"></div>
+                                <button
+                                    onclick="setGraph('vel')"
+                                    id="btn-g-vel"
+                                    class="text-[9px] uppercase font-bold text-gray-500 pb-1"
+                                >
+                                    Aire
+                                </button>
+                            </div>
+                            <div class="flex justify-between items-center mb-2">
+                                <h3
+                                    id="chart-title"
+                                    class="text-white text-[10px] font-mono uppercase opacity-70"
+                                >
+                                    Respuesta (dB)
+                                </h3>
+                            </div>
+                            <div class="relative h-48 w-full">
+                                <canvas id="freq-chart"></canvas>
+                            </div>
+                            <div
+                                class="grid grid-cols-2 gap-2 mt-3 text-[9px] font-mono text-gray-400 bg-black/40 p-2 rounded"
+                            >
+                                <div>
+                                    PICO MAX:
+                                    <span
+                                        id="val-peak"
+                                        class="text-white font-bold"
+                                        >--</span
+                                    >
+                                </div>
+                                <div>
+                                    VOL NETO:
+                                    <span
+                                        id="disp-net"
+                                        class="text-[#C5A96E] font-bold"
+                                        >-- L</span
+                                    >
+                                </div>
+                            </div>
+                        </div>
+                    </div>
 
-    <div id="app-interface" class="opacity-0 pointer-events-none transition-opacity duration-1000 z-20 relative h-full">
-        
-        <div class="fixed top-4 right-4 z-20 flex gap-2">
-            <button id="btn-home" class="bg-black/80 backdrop-blur border border-white/20 p-3 rounded hover:border-[#C5A96E] transition-colors text-white" title="Salir al Inicio">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
-            </button>
-            <div class="w-px h-10 bg-white/20 mx-2"></div>
-            <button id="btn-explode" class="bg-black/80 backdrop-blur border border-white/20 p-3 rounded hover:border-[#C5A96E] transition-colors text-white" title="Vista Explosiva">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"></path></svg>
-            </button>
-            <button id="btn-xray" class="bg-black/80 backdrop-blur border border-white/20 p-3 rounded hover:border-[#C5A96E] transition-colors text-white" title="Rayos X">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
-            </button>
+                    <div
+                        id="panel-build"
+                        class="hidden animate-in slide-in-from-left-4 fade-in duration-300"
+                    >
+                        <h3
+                            class="text-[#C5A96E] text-xs font-mono uppercase mb-4 tracking-widest border-b border-[#C5A96E]/30 pb-2"
+                        >
+                            Lista de Cortes (MDF 18mm)
+                        </h3>
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="text-[9px] text-gray-500 uppercase">
+                                    <th class="pb-2 font-normal">Pieza</th>
+                                    <th class="pb-2 font-normal">
+                                        Medida (cm)
+                                    </th>
+                                    <th class="pb-2 text-center font-normal">
+                                        Cant.
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody
+                                id="cut-table-body"
+                                class="text-gray-300 text-[10px] font-mono"
+                            ></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div
+                    class="mt-auto border-t border-white/10 pt-4 px-4 pb-6 bg-black/80 backdrop-blur"
+                >
+                    <h3
+                        class="text-[#C5A96E] text-[9px] font-mono uppercase mb-2 tracking-widest flex items-center gap-2"
+                    >
+                        <svg
+                            class="w-3 h-3"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                        >
+                            <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                stroke-width="2"
+                                d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"
+                            ></path></svg
+                        >Diagnóstico Inteligente
+                    </h3>
+                    <div
+                        id="advisor-panel"
+                        class="space-y-1 max-h-24 overflow-y-auto custom-scroll pr-1"
+                    ></div>
+                </div>
+            </aside>
         </div>
 
-        <aside class="fixed left-0 top-0 h-full w-96 bg-black/90 backdrop-blur-xl border-r border-white/10 z-10 flex flex-col">
-            <div class="p-6 border-b border-[#C5A96E]">
-                <h1 class="text-2xl font-bold tracking-widest text-white">BOXLAB <span class="text-[#C5A96E] text-xs align-top">PRO</span></h1>
-            </div>
-
-            <div class="flex border-b border-white/10 text-xs font-bold uppercase tracking-wider text-gray-500">
-                <button id="tab-design" class="flex-1 py-3 hover:text-white transition-colors text-[#C5A96E] border-b-2 border-[#C5A96E]">Diseño</button>
-                <button id="tab-analysis" class="flex-1 py-3 hover:text-white transition-colors">Análisis</button>
-                <button id="tab-build" class="flex-1 py-3 hover:text-white transition-colors">Cortes</button>
-            </div>
-
-            <div class="flex-1 overflow-y-auto p-6 custom-scroll">
-                
-                <div id="panel-design" class="space-y-6">
-                    <div>
-                        <label class="text-[10px] text-gray-500 block mb-1">SELECCIONAR DRIVER</label>
-                        <select id="sel-driver" class="bo-input w-full py-2 px-2 bg-[#0a0a0a] border border-white/20 text-xs text-[#C5A96E]"></select>
-                    </div>
-
-                    <div class="border-t border-white/10 pt-4 space-y-4">
-                        <h3 class="text-[#C5A96E] text-xs font-mono uppercase mb-2">Dimensiones (cm)</h3>
-                        
-                        <div>
-                            <div class="flex justify-between items-center mb-1">
-                                <label class="text-[10px] text-gray-400">ANCHO (W)</label>
-                                <input type="number" id="num-width" class="bg-transparent border-b border-gray-700 text-right w-12 text-xs focus:border-[#C5A96E] outline-none text-white">
-                            </div>
-                            <input type="range" id="slider-width" min="20" max="100" class="w-full">
-                        </div>
-                        
-                        <div>
-                            <div class="flex justify-between items-center mb-1">
-                                <label class="text-[10px] text-gray-400">ALTO (H)</label>
-                                <input type="number" id="num-height" class="bg-transparent border-b border-gray-700 text-right w-12 text-xs focus:border-[#C5A96E] outline-none text-white">
-                            </div>
-                            <input type="range" id="slider-height" min="20" max="120" class="w-full">
-                        </div>
-
-                        <div>
-                            <div class="flex justify-between items-center mb-1">
-                                <label class="text-[10px] text-gray-400">PROFUNDIDAD (D)</label>
-                                <input type="number" id="num-depth" class="bg-transparent border-b border-gray-700 text-right w-12 text-xs focus:border-[#C5A96E] outline-none text-white">
-                            </div>
-                            <input type="range" id="slider-depth" min="20" max="100" class="w-full">
-                        </div>
-                    </div>
-
-                    <div class="border-t border-white/10 pt-4">
-                        <label class="text-[10px] text-gray-500 block mb-1">TOPOLOGÍA</label>
-                        <select id="sel-box-type" class="bo-input w-full py-2 px-2 bg-[#0a0a0a] border border-white/20 mb-2 text-xs">
-                            <option value="ported" selected>Bass Reflex (Ported)</option>
-                            <option value="sealed">Sellada (Sealed)</option>
-                            <option value="bandpass4">Bandpass 4th</option>
-                        </select>
-                        <label class="text-[10px] text-gray-500 block mb-1">REFUERZOS</label>
-                        <select id="sel-bracing" class="bo-input w-full py-2 px-2 bg-[#0a0a0a] border border-white/20 mb-4 text-xs">
-                            <option value="none">Ninguno</option>
-                            <option value="window" selected>Tipo Ventana</option>
-                            <option value="cross">Cruz Matriz</option>
-                        </select>
-                    </div>
-
-                    <div id="sec-bandpass" class="hidden border-l-2 border-[#C5A96E] pl-2">
-                        <label class="text-[10px] text-gray-500 block mb-1">DIVISIÓN CÁMARA</label>
-                        <input type="range" id="input-ratio" min="0.2" max="0.8" step="0.05" value="0.5" class="w-full mb-2">
-                        <div class="grid grid-cols-2 gap-2 text-[10px]">
-                            <div class="bg-white/5 p-1 rounded">Rear: <span id="disp-vol-c1" class="font-bold">--</span></div>
-                            <div class="bg-white/5 p-1 rounded">Front: <span id="disp-vol-c2" class="font-bold">--</span></div>
-                        </div>
-                    </div>
-
-                    <div id="sec-port">
-                        <h3 class="text-[#C5A96E] text-xs font-mono uppercase mb-2 border-t border-white/10 pt-4">Puerto</h3>
-                        <select id="sel-port-type" class="bo-input w-full py-1 px-2 bg-[#0a0a0a] border border-white/20 mb-3 text-xs">
-                            <option value="circular">Circular Tubo</option>
-                            <option value="slot">Slot Rectangular</option>
-                            <option value="aero" selected>Aeroport (Bose)</option>
-                        </select>
-
-                        <div class="flex items-center justify-between mb-3">
-                            <label class="text-[10px] text-gray-400">SINTONÍA (Hz)</label>
-                            <input id="in-freq" type="number" value="36" class="bg-transparent border-b border-[#C5A96E] text-center w-12 text-sm text-white focus:outline-none">
-                        </div>
-
-                        <div id="div-circ">
-                            <div class="flex justify-between items-center mb-1">
-                                <label class="text-[10px] text-gray-500">DIÁMETRO (cm)</label>
-                                <input type="number" id="num-diam" class="bg-transparent border-b border-gray-700 text-right w-12 text-xs text-white">
-                            </div>
-                            <input type="range" id="slider-diam" min="5" max="25" step="0.5" class="w-full">
-                        </div>
-                        
-                        <div id="div-slot" class="hidden space-y-2">
-                            <div>
-                                <div class="flex justify-between items-center mb-1">
-                                    <label class="text-[10px] text-gray-500">ANCHO (cm)</label>
-                                    <input type="number" id="num-p-width" class="bg-transparent border-b border-gray-700 text-right w-12 text-xs text-white">
-                                </div>
-                                <input type="range" id="slider-p-width" min="5" max="40" step="0.5" class="w-full">
-                            </div>
-                            <div>
-                                <div class="flex justify-between items-center mb-1">
-                                    <label class="text-[10px] text-gray-500">ALTO (cm)</label>
-                                    <input type="number" id="num-p-height" class="bg-transparent border-b border-gray-700 text-right w-12 text-xs text-white">
-                                </div>
-                                <input type="range" id="slider-p-height" min="2" max="20" step="0.5" class="w-full">
-                            </div>
-                        </div>
-
-                        <div class="mt-4 bg-[#C5A96E]/10 p-2 rounded border border-[#C5A96E]/30">
-                            <p class="text-[9px] text-[#C5A96E] uppercase">Largo Requerido</p>
-                            <p id="disp-port-len" class="text-xl font-mono text-white">-- cm</p>
-                        </div>
-                        
-                        <div id="ui-warnings" class="mt-2"></div>
-                    </div>
-                </div>
-
-                <div id="panel-analysis" class="hidden space-y-4">
-                    <div class="bg-white/5 p-3 rounded">
-                        <canvas id="freq-chart" width="400" height="300"></canvas>
-                    </div>
-                    <div class="text-xs text-gray-400 p-2"><p>• Curva teórica anecoica.</p></div>
-                    <div class="flex justify-between border-t border-white/10 pt-2">
-                        <span class="text-gray-500 text-xs">VOLUMEN NETO</span>
-                        <span id="disp-net" class="text-white font-mono">-- L</span>
-                    </div>
-                </div>
-
-                <div id="panel-build" class="hidden">
-                    <h3 class="text-[#C5A96E] text-xs font-mono uppercase mb-4">Lista de Cortes</h3>
-                    <table class="w-full text-left border-collapse">
-                        <thead>
-                            <tr class="text-[10px] text-gray-500 uppercase border-b border-white/10">
-                                <th class="pb-2">Panel</th>
-                                <th class="pb-2">Dims (cm)</th>
-                                <th class="pb-2 text-center">Cant.</th>
-                            </tr>
-                        </thead>
-                        <tbody id="cut-table-body" class="text-gray-300"></tbody>
-                    </table>
-                </div>
-
-            </div>
-        </aside>
-    </div>
-
-    <script type="module" src="/src/main.ts"></script>
-</body>
+        <script type="module" src="/src/main.ts"></script>
+    </body>
 </html>
